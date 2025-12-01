@@ -236,18 +236,18 @@ dlgWndAskPINs::dlgWndAskPINs( DlgPinInfo pinInfo1, DlgPinInfo pinInfo2, std::wst
 
 dlgWndAskPINs::~dlgWndAskPINs()
 {
-	KillWindow( );
+	KillWindow();
 
-	for (int i = 0; i < 12; ++i)
-	{
-		if (ImageKP_BTN[i]) { DeleteObject(ImageKP_BTN[i]); ImageKP_BTN[i] = NULL; }
-	}
-	if (ImageKP_BTN_Mask) { DeleteObject(ImageKP_BTN_Mask); ImageKP_BTN_Mask = NULL; }
+    // Same behavior, less repetition
+    auto free_gdi = [](auto& h) { if (h) { DeleteObject(h); h = NULL; } };
 
-	if (ImagePIN) { DeleteObject(ImagePIN); ImagePIN = NULL; }
-	if (ImagePIN_Mask) { DeleteObject(ImagePIN_Mask); ImagePIN_Mask = NULL; }
+    for (auto& bmp : ImageKP_BTN) free_gdi(bmp);
+    free_gdi(ImageKP_BTN_Mask);
 
-	if (TextFont) { DeleteObject(TextFont); TextFont = NULL; }
+    free_gdi(ImagePIN);
+    free_gdi(ImagePIN_Mask);
+
+    free_gdi(TextFont);
 }
 
 void dlgWndAskPINs::GetPinResult()
