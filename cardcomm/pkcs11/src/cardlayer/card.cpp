@@ -1,4 +1,3 @@
-
 /* ****************************************************************************
 
  * eID Middleware Project.
@@ -1173,19 +1172,20 @@ namespace eIDMW
 
 		// Bad PIN: show a dialog to ask the user to try again
 		// PIN blocked: show a dialog to tell the user
+		// Always inform the user when not using a physical pinpad
 		if (!bUsePinpad)
 		{
 #ifdef NO_DIALOGS
-			return false;
+            return false;
 #endif
-			DlgPinUsage usage = PinUsage2Dlg(Pin, pKey);
-			DlgRet dlgret = DlgBadPin(usage, utilStringWiden(Pin.csLabel).c_str(), ulRemaining);
-			if (0 != ulRemaining && DLG_RETRY == dlgret)
-			{
-				bRetry = true;
-			}
-		}
-		return bRetry;
+            DlgPinUsage usage = PinUsage2Dlg(Pin, pKey);
+            DlgRet dlgret = DlgBadPin(usage, utilStringWiden(Pin.csLabel).c_str(), ulRemaining);
+            if (ulRemaining != 0 && dlgret == DLG_RETRY)
+            {
+                bRetry = true;
+            }
+        }
+        return bRetry;
 	}
 
 	/*bool CCard::PinCmd(tPinOperation operation, const tPin & Pin, const std::string & csPin1,
@@ -1281,33 +1281,33 @@ namespace eIDMW
 			throw CMWEXCEPTION(m_poPCSC->SW12ToErr(ulSW12));
 
 #ifndef NO_DIALOGS
-		// Bad PIN: show a dialog to ask the user to try again
-		// PIN blocked: show a dialog to tell the user
-		if (bAskPIN && !bRet)
-		{
-			DlgPinUsage usage = PinUsage2Dlg(Pin, pKey);
-			DlgRet dlgret = DlgBadPin(usage, utilStringWiden(Pin.csLabel).c_str(), ulRemaining);
-			if (0 != ulRemaining && DLG_RETRY == dlgret)
-				goto bad_pin;
-		}
+        // Bad PIN: always inform the user. If the PIN was asked by our dialog,
+        // allow retry; if it was provided externally (e.g., by host app), just show info.
+        if (!bRet)
+        {
+            DlgPinUsage usage = PinUsage2Dlg(Pin, pKey);
+            DlgRet dlgret = DlgBadPin(usage, utilStringWiden(Pin.csLabel).c_str(), ulRemaining);
+            if (bAskPIN && ulRemaining != 0 && dlgret == DLG_RETRY)
+                goto bad_pin;
+        }
 #endif
-		
-		// If PIN command OK and no SSO, then state that we have now
-		// verified this PIN, this info is needed in the Sign() method
-		if (bRet && !m_poPCSC->m_bSSO)
-		{
-			bool bFound = false;
+        
+        // If PIN command OK and no SSO, then state that we have now
+        // verified this PIN, this info is needed in the Sign() method
+        if (bRet && !m_poPCSC->m_bSSO)
+        {
+            bool bFound = false;
 
-			for (size_t i = 0; i < m_verifiedPINs.size() && !bFound; i++)
-			{
-				bFound = (m_verifiedPINs[i] == Pin.ulIndex);
-			}
-			if (!bFound)
-			{
-				m_verifiedPINs.push_back(Pin.ulIndex);
-			}
-		}
-		return bRet;
+            for (size_t i = 0; i < m_verifiedPINs.size() && !bFound; i++)
+            {
+                bFound = (m_verifiedPINs[i] == Pin.ulIndex);
+            }
+            if (!bFound)
+            {
+                m_verifiedPINs.push_back(Pin.ulIndex);
+            }
+        }
+        return bRet;
 	}
 
 
